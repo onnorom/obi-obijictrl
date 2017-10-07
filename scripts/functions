@@ -1,0 +1,117 @@
+osvers() {
+  distro=$(uname -s)
+  case "$distro" in 
+    Linux*) 
+      release=$(cat /etc/*-release 2>/dev/null)
+      [[ $? -gt 0 ]] && exit 1
+
+      rel=$(echo "$release" 2>/dev/null |egrep -i '^(name=.*|red.*hat|centos.*)')
+      case "$rel" in
+	*Red*Hat*|*CentOS*) value="RedHat";;
+	*Ubuntu*|*Debian*)
+      	   codename=$(echo "$release" 2>/dev/null |grep -i 'codename' |sed 's/.*CODENAME=\(.*\)/\1/' 2>/dev/null)
+           codename=$(echo $codename |cut -d' ' -f1 2>/dev/null)
+	   value="Debian|$codename"
+	;;
+      esac
+      ;;
+    SunOS*) echo "Support for Unix ($distro) is not available at the moment" >&2; exit 1;;
+      *)    echo "Unsupported distro (${distro})" >&2; exit 1;;
+  esac
+  echo "$value"
+}
+
+_prompt() {
+  software=$(sed 's/\(.\)/\U\1/' <<<$1)
+  show=2
+  tty=$(tty)
+
+  [[ "$tty" = "not a tty" ]] && echo "$tty" >&2 && exit 1
+
+  if [[ -n ${software} ]]; then
+  echo "${software} does not seem to be installed on this system"
+  echo "Do you wish to see install steps?"
+  select yn in "Yes" "No" "Quit"; do
+    case $yn in
+        Yes)   show=0; break;;
+         No)   show=1; break;;
+         Quit) show=3; break;;
+	 *)  echo "Please enter a listed numeric choice...";;
+    esac
+  done
+  fi
+  return $show
+}
+
+install_puppet() {
+  retval=$1 
+  rel=$(echo "$retval" |cut -d'|' -f1)
+  case "$rel" in
+    *Red*Hat*|*CentOS*) 
+      echo "#####Redhat-based Linux distro#####" >&2
+      echo "#####Example installation steps below#####"
+cat <<EOL
+sudo rpm -ivh https://yum.puppetlabs.com/puppetlabs-release-pc1-el-7.noarch.rpm
+sudo yum -y install puppet (or puppetserver)
+EOL
+     ;;
+    *Ubuntu*|*Debian*)  
+      codename=$(echo "$retval" |cut -d'|' -f2)
+      echo "#####Debian-based Linux Distro#####" >&2
+      echo "*****Distro codenames: ${codename}, trusty, precise etc...*****" >&2
+      echo "#####Example installation steps below#####"
+cat <<EOT
+wget https://apt.puppetlabs.com/puppetlabs-release-${codename}.deb
+sudo dpkg -i puppetlabs-release-${codename}.deb
+sudo apt-get update
+EOT
+      ;;
+  esac
+}
+
+install_r10k() {
+  retval=$1 
+  rel=$(echo "$retval" |cut -d'|' -f1)
+  case "$rel" in
+    *Red*Hat*|*CentOS*) 
+      echo "#####Redhat-based Linux distro#####" >&2
+      echo "#####Example installation choices are provided below#####"
+cat <<EOL
+gem install r10k 
+/opt/puppet/bin/gem install r10k
+/opt/puppetlabs/puppet/bin/gem install r10k
+EOL
+     ;;
+    *Ubuntu*|*Debian*)  
+      codename=$(echo "$retval" |cut -d'|' -f2)
+      echo "#####Debian-based Linux Distro#####" >&2
+      echo "*****Distro codenames: ${codename}, trusty, precise etc...*****" >&2
+      echo "#####Example installation steps below#####"
+cat <<EOT
+sudo apt-get update
+sudo apt-get install r10k
+EOT
+      ;;
+  esac
+}
+
+install_git() {
+  echo "Missing required tool for this setup." >&2 
+  echo "Please install Git for this distro and clone bnsgwmsctrl repo" >&2 
+  exit 1
+}
+
+check_repo_branch() {
+branch=$1
+PROG=${PROGNAME:-'anonymous'}
+_log=${bnsautomata_log:-"/tmp/.${PROG}.log"}
+
+count=$(git ls-remote --heads $(git remote 2>$_log >&2 | head -1) "$branch" 2>$_log >&2 | \
+    cut -d$'\t' -f2 | \
+    sed 's,refs/heads/,,' | \
+    grep ^"$branch"$ | wc -l)
+if [[ $count = 0 ]]; then
+	tail $_log
+	exit 1
+fi
+}
