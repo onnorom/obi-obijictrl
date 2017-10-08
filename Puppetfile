@@ -4,7 +4,7 @@ mod 'puppetlabs-stdlib',
 
 mod 'obijiautomata',
   :git => 'https://github.com/onnorom/obi-obijiautomata.git',
-  :tag => '0.1.2'
+  :tag => '0.1.3'
 
 mod 'obiji',
   :git => 'https://github.com/onnorom/obi-obiji.git',

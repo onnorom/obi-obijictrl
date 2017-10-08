@@ -1,3 +1,60 @@
+get_module_path() {
+  mod=$($puppet_bin config print modulepath)
+  moduledir=${mod##*:}
+  echo $moduledir
+}
+
+get_branch_name() {
+  brch=$(cat /etc/.host.product.env |sed 's, ,,g')
+  echo $brch
+}
+
+facts_setter() {
+
+dirs=$(cat <<'EOF'
+/opt/puppetlabs/facter
+/etc/puppetlabs/facter
+/etc/puppet/facter
+/etc/facter
+EOF
+)
+
+FY=$(cat <<EOT
+---
+product_environment: $environment
+product_name: $productname
+automata_ctrldir: $dir
+EOT
+)
+
+_excode=1
+for fdir in $(echo "$dirs"); do
+  if [[ -d ${fdir} ]]; then
+    echo "Found ${fdir}..." >&2
+    if [[ -d "${fdir}/facts.d" ]]; then
+      echo "Creating facts..." >&2
+    else
+      echo "Creating facts.d..." >&2
+      mkdir -p ${fdir}/facts.d 2>/dev/null
+      _excode=$?
+      if [[ $_excode -gt 0 ]]; then
+        echo "Unable to create facts.d..." >&2
+	continue
+      fi
+    fi
+    echo "${FY}" > ${fdir}/facts.d/bnsgwms_masterless.yaml 2>/dev/null
+    _excode=$?
+    if [[ $_excode -gt 0 ]]; then
+      echo "Failed to create facts..." >&2
+      continue
+    fi
+    break
+  fi
+done
+
+return $_excode
+}
+
 osvers() {
   distro=$(uname -s)
   case "$distro" in 
@@ -106,7 +163,7 @@ branch=$1
 PROG=${PROGNAME:-'anonymous'}
 _log=${bnsautomata_log:-"/tmp/.${PROG}.log"}
 
-count=$(git ls-remote --heads $(git remote 2>$_log >&2 | head -1) "$branch" 2>$_log >&2 | \
+count=$(git ls-remote --heads $(git remote 2>$_log | head -1) "$branch" 2>$_log | \
     cut -d$'\t' -f2 | \
     sed 's,refs/heads/,,' | \
     grep ^"$branch"$ | wc -l)

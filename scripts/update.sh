@@ -5,8 +5,12 @@ pwdir=$(pwd)
 r10k_bin=$(which r10k)
 puppet_bin=$(which puppet)
 git_bin=$(which git)
-branch='master'
 proxy='http://proxyprd.scotia-capital.com:8080'
+
+. ${dir}/functions
+
+moduledir=${get_module_path:-'site'}
+branch=${get_branch_name:-'master'}
 
 cleanup() {
     err=$?
@@ -58,7 +62,7 @@ setproxy
 [[ ! -n $noproxy ]] . .profile.$$ 2>/dev/null
 i=1
 while [[ $i -gt 0 ]]; do
-	$git_bin pull origin ${branch} >${logfile} 2>&1 && $r10k_bin puppetfile install --verbose >>${logfile} 2>&1
+	$git_bin pull origin ${branch} >${logfile} 2>&1 && $r10k_bin puppetfile install --moduledir=${moduledir} --verbose >>${logfile} 2>&1
 if [[ -n $(egrep -i "(could not resolve proxy|failed to connect)" ${logfile}) ]]; then
    unsetproxy
    [[ ! -n $noproxy ]] && . .profile.$$ 2>/dev/null 
@@ -75,9 +79,9 @@ if [[ -n ${warnings} ]]; then
    for x in $(echo $warnings); do
 	rm -rf "${x}" >>${logfile} 2>&1
    done
-   $r10k_bin puppetfile install --verbose >>${logfile} 2>&1 && $puppet_bin apply manifests/site.pp >>${logfile} 2>&1
+   $r10k_bin puppetfile install --moduledir=${moduledir} --verbose >>${logfile} 2>&1 && $puppet_bin apply --modulepath=modules:${moduledir}:'$basemodulepath' manifests/site.pp >>${logfile} 2>&1
 else
-   $puppet_bin apply manifests/site.pp >>${logfile} 2>&1
+   $puppet_bin apply --modulepath=modules:${moduledir}:'$basemodulepath' manifests/site.pp >>${logfile} 2>&1
 fi
 
 cd ${pwdir}

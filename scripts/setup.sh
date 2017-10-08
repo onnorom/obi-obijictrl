@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 PROGNAME=$(basename $0)
-
 dir="$(dirname $(readlink -f $0))"
 r10k_bin="$(which r10k)"
 puppet_bin="$(which puppet)"

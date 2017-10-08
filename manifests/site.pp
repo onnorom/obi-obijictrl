@@ -27,6 +27,6 @@ File { backup => false }
 
 node default {
   # This is where you can declare classes for all nodes.
-  class { 'obiji::roles': }
+  class { 'obiji': }
 }
 

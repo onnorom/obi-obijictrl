@@ -7,57 +7,13 @@ r10k_bin="$(which r10k)"
 puppet_bin="$(which puppet)"
 git_bin="$(which git)"
 
+. ${dir}/functions
+
 usageAndExit() {
   rec=$1
   [[ -n "$rec" ]] && echo $rec >&2
   echo "${PROGNAME} -e <environment> [-a <application> | -p <productname>] [-h]" >&2
   exit 1
-}
-
-facts_setter() {
-
-dirs=$(cat <<'EOF'
-/opt/puppetlabs/facter
-/etc/puppetlabs/facter
-/etc/puppet/facter
-/etc/facter
-EOF
-)
-
-FY=$(cat <<EOT
----
-product_environment: $environment
-product_name: $productname
-automata_ctrldir: $dir
-EOT
-)
-
-_excode=1
-for fdir in $(echo "$dirs"); do
-  if [[ -d ${fdir} ]]; then
-    echo "Found ${fdir}..." >&2
-    if [[ -d "${fdir}/facts.d" ]]; then
-      echo "Creating facts..." >&2
-    else
-      echo "Creating facts.d..." >&2
-      mkdir -p ${fdir}/facts.d 2>/dev/null
-      _excode=$?
-      if [[ $_excode -gt 0 ]]; then
-        echo "Unable to create facts.d..." >&2
-	continue
-      fi
-    fi
-    echo "${FY}" > ${fdir}/facts.d/bnsgwms_masterless.yaml 2>/dev/null
-    _excode=$?
-    if [[ $_excode -gt 0 ]]; then
-      echo "Failed to create facts..." >&2
-      continue
-    fi
-    break
-  fi
-done
-
-return $_excode
 }
 
 while getopts ":p:a:e:vh" opt; do
@@ -99,9 +55,12 @@ else
   ncode=$?
 
   ( [[ $xcode -gt 0 ]] || [[ $vcode -gt 0 ]] || [[ $ncode -gt 0 ]] ) && echo "One or more facts setup errors encountered" >&2 && exit 1
+  echo "${dir}" > /etc/.host.control.dir 2>/dev/null
 fi
 
+moduledir=${get_module_path:-'site'}
 pushd $dir/.. >/dev/null
-$r10k_bin puppetfile install ${VERBOSE}
+$r10k_bin puppetfile install --moduledir=${moduledir} ${VERBOSE}
 
-$puppet_bin apply manifests/site.pp ${VERBOSE}
+$puppet_bin apply --modulepath=modules:${moduledir}:'$basemodulepath' manifests/site.pp ${VERBOSE}
+
