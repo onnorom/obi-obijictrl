@@ -28,6 +28,7 @@ FY=$(cat <<EOT
 ---
 product_environment: $environment
 product_name: $productname
+automata_ctrldir: $dir
 EOT
 )
 
@@ -97,7 +98,7 @@ else
   echo "${productname}" > /etc/.host.product.name 2>/dev/null
   ncode=$?
 
-  ( [[ $xcode -gt 0 ]] || [[ $vcode -gt 0 ]] || [[ $ncode -gt 0 ]] ) && echo "One or more errors encountered" >&2 && exit 1
+  ( [[ $xcode -gt 0 ]] || [[ $vcode -gt 0 ]] || [[ $ncode -gt 0 ]] ) && echo "One or more facts setup errors encountered" >&2 && exit 1
 fi
 
 pushd $dir/.. >/dev/null
