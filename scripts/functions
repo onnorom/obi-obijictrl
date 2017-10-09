@@ -168,7 +168,12 @@ count=$(git ls-remote --heads $(git remote 2>$_log | head -1) "$branch" 2>$_log 
     sed 's,refs/heads/,,' | \
     grep ^"$branch"$ | wc -l)
 if [[ $count = 0 ]]; then
-	tail $_log
-	exit 1
+  tailer=$(tail $_log)
+  if [[ -n $tailer ]]; then
+    echo "$tailer" >&2
+  else
+    echo "Branch($branch) does not exist in control repo" >&2
+  fi
+  exit 1
 fi
 }
