@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-logfile="/tmp/puppet-run.log"
+logfile="/var/automata/logs/puppet-run.log"
 dir="$(dirname $(readlink -f $0))"
 pwdir=$(pwd)
 r10k_bin=$(which r10k)
