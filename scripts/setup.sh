@@ -13,7 +13,7 @@ bnsautomata_log=/tmp/.${PROGNAME}.log
 . ${dir}/functions
 
 usageAndExit() {
-  echo "${PROGNAME} [-e <environment>] [-a <application> | -p <productname>] [-h | --help] [-o | --offline]" >&2
+  echo "${PROGNAME} [-e <environment>] [-a |--appenv <app_environment>] [-p <productname>] [-h | --help] [-o | --offline]" >&2
   exit 1
 }
 
@@ -28,6 +28,7 @@ for arg in "$@"; do
   case "$arg" in
     "--help")    set -- "$@" "-h" ;;
     "--offline") set -- "$@" "-o" ;;
+    "--appenv")  set -- "$@" "-a" ;;
     *)           set -- "$@" "$arg";;
   esac
 done
@@ -35,12 +36,13 @@ done
 OPTIND=1
 while getopts ":p:a:e:vho" opt; do
   case $opt in
-	h)   usageAndExit;;
-	e)   prov_environment=$OPTARG;;
-	p|a) productname=$OPTARG;;
-	o)   offline=true;;
-	v)   VERBOSE='--verbose';;
-	*)   usageAndExit;;
+	h) usageAndExit;;
+	e) prov_environment=$OPTARG;;
+	p) productname=$OPTARG;;
+	a) app_env=$OPTARG;;
+	o) offline=true;;
+	v) VERBOSE='--verbose';;
+	*) usageAndExit;;
   esac
 done
 shift $((OPTIND-1))
@@ -85,5 +87,5 @@ if [[ $offline != true ]]; then
   check_repo_branch "${environment}"
 fi
 
-${dir}/bootstrap.sh -e "${environment}" -p "${productname}" ${VERBOSE}
+${dir}/bootstrap.sh -e "${environment}" -p "${productname}" -a "${app_env}" ${VERBOSE}
 

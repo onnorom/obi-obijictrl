@@ -9,8 +9,10 @@ proxy='http://proxyprd.scotia-capital.com:8080'
 
 . ${dir}/functions
 
-moduledir=${get_module_path:-'site'}
-branch=${get_branch_name:-'master'}
+moduledir_name=$(get_module_path)
+moduledir=${moduledir_name:-'site'}
+branch_name=$(get_branch_name)
+branch=${branch_name:-'master'}
 
 cleanup() {
     err=$?
@@ -31,13 +33,13 @@ trap sig_cleanup INT QUIT TERM
 setproxy() {
    choice=$1
    case "$choice" in 
-     /(Y|y)es/)
+     yes|Yes)
         echo "export HTTP_PROXY=${proxy}" > .profile.$$
         echo "export HTTPS_PROXY=${proxy}" >> .profile.$$
         echo "export http_proxy=${proxy}" >> .profile.$$
         echo "export https_proxy=${proxy}" >> .profile.$$
-		;;
-     /(N|n)o/)
+	;;
+     no|No)
    	echo "export HTTP_PROXY=" > .profile.$$
    	echo "export HTTPS_PROXY=" >> .profile.$$
    	echo "export http_proxy=" >> .profile.$$

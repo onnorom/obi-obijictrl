@@ -12,7 +12,7 @@ git_bin="$(which git)"
 usageAndExit() {
   rec=$1
   [[ -n "$rec" ]] && echo $rec >&2
-  echo "${PROGNAME} -e <environment> [-a <application> | -p <productname>] [-h]" >&2
+  echo "${PROGNAME} -e <environment> [-a <app_environment>] [-p <productname>] [-h]" >&2
   exit 1
 }
 
@@ -20,7 +20,8 @@ while getopts ":p:a:e:vh" opt; do
   case $opt in
 	h)   usageAndExit;;
 	e)   prov_environment=$OPTARG;;
-        p|a) productname=$OPTARG;;
+        p)   productname=$OPTARG;;
+        a)   app_environment=$OPTARG;;
         v)   VERBOSE='--verbose';;
 	*)   usageAndExit;;
   esac
@@ -56,9 +57,12 @@ else
 
   ( [[ $xcode -gt 0 ]] || [[ $vcode -gt 0 ]] || [[ $ncode -gt 0 ]] ) && echo "One or more facts setup errors encountered" >&2 && exit 1
   echo "${dir}" > /etc/.host.control.dir 2>/dev/null
+
+  [[ -n $app_environment ]] && echo "${app_environment}" > /etc/.host.app.env 2>/dev/null
 fi
 
-moduledir=${get_module_path:-'site'}
+moduledirname=$(get_module_path)
+moduledir=${moduledirname:-'site'}
 pushd $dir/.. >/dev/null
 $r10k_bin puppetfile install --moduledir=${moduledir} ${VERBOSE}
 
