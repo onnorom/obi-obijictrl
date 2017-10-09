@@ -61,7 +61,7 @@ unsetproxy() {
 pushd ${dir}/..
 
 setproxy
-[[ ! -n $noproxy ]] . .profile.$$ 2>/dev/null
+[[ ! -n $noproxy ]] && . .profile.$$ 2>/dev/null
 i=1
 while [[ $i -gt 0 ]]; do
 	$git_bin pull origin ${branch} >${logfile} 2>&1 && $r10k_bin puppetfile install --moduledir=${moduledir} --verbose >>${logfile} 2>&1
