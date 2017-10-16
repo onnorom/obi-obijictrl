@@ -1,28 +1,33 @@
 #!/usr/bin/env bash
 PROGNAME=$(basename $0)
-
 cwd=$(pwd)
 dir="$(dirname $(readlink -f $0))"
 r10k_bin="$(which r10k)"
 puppet_bin="$(which puppet)"
 git_bin="$(which git)"
+rootdir='/etc'
+cache=${dir}/.cache
 
-. ${dir}/functions
+source ${dir}/functions
+
+trap cleanup EXIT
+trap sig_cleanup INT QUIT TERM
 
 usageAndExit() {
   rec=$1
   [[ -n "$rec" ]] && echo $rec >&2
-  echo "${PROGNAME} -e <environment> [-a <app_environment>] [-p <productname>] [-h]" >&2
+  echo "${PROGNAME} -e <environment> [-a <app_environment>] [-p <productname>] [-h|--help] [-v|--verbose] [-d|--debug]" >&2
   exit 1
 }
 
-while getopts ":p:a:e:vh" opt; do
+while getopts ":p:a:e:dvh" opt; do
   case $opt in
 	h)   usageAndExit;;
 	e)   prov_environment=$OPTARG;;
         p)   productname=$OPTARG;;
         a)   app_environment=$OPTARG;;
-        v)   VERBOSE='--verbose';;
+        v)   VERBOSE='--verbose'; touch ${dir}/.verbose;;
+        d)   DEBUG='--debug';;
 	*)   usageAndExit;;
   esac
 done
@@ -50,21 +55,22 @@ else
 
   facts_setter
   xcode=$?
-  echo "${environment}" > /etc/.host.product.env 2>/dev/null
+  echo "${environment}" > ${rootdir}/.host.product.env 2>/dev/null
   vcode=$?
-  echo "${productname}" > /etc/.host.product.name 2>/dev/null
+  echo "${productname}" > ${rootdir}/.host.product.name 2>/dev/null
   ncode=$?
 
   ( [[ $xcode -gt 0 ]] || [[ $vcode -gt 0 ]] || [[ $ncode -gt 0 ]] ) && echo "One or more facts setup errors encountered" >&2 && exit 1
-  echo "${dir}" > /etc/.host.control.dir 2>/dev/null
+  echo "${dir}" > ${rootdir}/.host.control.dir 2>/dev/null
 
-  [[ -n $app_environment ]] && echo "${app_environment}" > /etc/.host.app.env 2>/dev/null
+  [[ -n $app_environment ]] && echo "${app_environment}" > ${rootdir}/.host.app.env 2>/dev/null
+  mkdir -p $cache && touch ${cache}/locks
 fi
 
 moduledirname=$(get_module_path)
 moduledir=${moduledirname:-'site'}
-pushd $dir/.. >/dev/null
+pushd $dir/.. >/dev/null 2>&1
 $r10k_bin puppetfile install --moduledir=${moduledir} ${VERBOSE}
 
-$puppet_bin apply --modulepath=modules:${moduledir}:'$basemodulepath' manifests/site.pp ${VERBOSE}
+$puppet_bin apply --modulepath=modules:${moduledir}:'$basemodulepath' manifests/site.pp ${VERBOSE} ${DEBUG}
 

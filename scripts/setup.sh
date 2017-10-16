@@ -10,10 +10,10 @@ user=$(whoami)
 offline=false
 bnsautomata_log=/tmp/.${PROGNAME}.log
 
-. ${dir}/functions
+source ${dir}/functions
 
 usageAndExit() {
-  echo "${PROGNAME} [-e <environment>] [-a |--appenv <app_environment>] [-p <productname>] [-h | --help] [-o | --offline]" >&2
+  echo "${PROGNAME} [-e <environment>] [-a|--appenv <app_environment>] [-p <productname>] [-x|--proxy <url>] [-n|--noproxy] [-h|--help] [-v|--verbose] [-d|--debug] [-o|--offline]" >&2
   exit 1
 }
 
@@ -23,25 +23,34 @@ if [ "$user" != "root" ] &&  ! sudo -h > /dev/null 2>&1; then
   exit 1
 fi
 
+rm -f ~/.automata_rc 2>/dev/null
+
 for arg in "$@"; do
   shift
   case "$arg" in
     "--help")    set -- "$@" "-h" ;;
     "--offline") set -- "$@" "-o" ;;
     "--appenv")  set -- "$@" "-a" ;;
+    "--verbose") set -- "$@" "-v" ;;
+    "--debug")   set -- "$@" "-d" ;;
+    "--proxy")   set -- "$@" "-x" ;;
+    "--noproxy") set -- "$@" "-n" ;;
     *)           set -- "$@" "$arg";;
   esac
 done
 
 OPTIND=1
-while getopts ":p:a:e:vho" opt; do
+while getopts ":p:a:e:x:dvho" opt; do
   case $opt in
 	h) usageAndExit;;
 	e) prov_environment=$OPTARG;;
 	p) productname=$OPTARG;;
-	a) app_env=$OPTARG;;
+	a) app_env="-a $OPTARG";;
+	x) proxy="$OPTARG"; echo "export xproxy=$proxy" >> ~/.automata_rc;;
+	n) noproxy="1"; echo "export nproxy=1" >> ~/.automata_rc;;
 	o) offline=true;;
-	v) VERBOSE='--verbose';;
+	v) VERBOSE='-v';;
+	d) DEBUG='-d';;
 	*) usageAndExit;;
   esac
 done
@@ -87,5 +96,5 @@ if [[ $offline != true ]]; then
   check_repo_branch "${environment}"
 fi
 
-${dir}/bootstrap.sh -e "${environment}" -p "${productname}" -a "${app_env}" ${VERBOSE}
+${dir}/bootstrap.sh -e "${environment}" -p "${productname}" ${app_env} ${VERBOSE} ${DEBUG}
 

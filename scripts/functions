@@ -1,3 +1,46 @@
+cleanup() {
+    err=$?
+    rm ${dir}/../.profile.$$ 2>/dev/null
+    rm -rf "$cache" 2>/dev/null
+    rm -rf "${dir}/.verbose" 2>/dev/null
+    trap '' EXIT INT TERM
+    exit $err
+}
+
+sig_cleanup() {
+    trap '' EXIT
+    false
+    cleanup
+}
+
+setproxy() {
+   choice=$1
+   case "$choice" in
+     yes|Yes)
+        echo "export HTTP_PROXY=${proxy}" > .profile.$$
+        echo "export HTTPS_PROXY=${proxy}" >> .profile.$$
+        echo "export http_proxy=${proxy}" >> .profile.$$
+        echo "export https_proxy=${proxy}" >> .profile.$$
+        ;;
+     no|No)
+        echo "export HTTP_PROXY=" > .profile.$$
+        echo "export HTTPS_PROXY=" >> .profile.$$
+        echo "export http_proxy=" >> .profile.$$
+        echo "export https_proxy=" >> .profile.$$
+        ;;
+     *)
+         echo "export HTTP_PROXY=${proxy}" > .profile.$$
+         echo "export HTTPS_PROXY=${proxy}" >> .profile.$$
+         echo "export http_proxy=${proxy}" >> .profile.$$
+         echo "export https_proxy=${proxy}" >> .profile.$$
+        ;;
+   esac
+}
+
+unsetproxy() {
+        setproxy "no"
+}
+
 get_module_path() {
   mod=$($puppet_bin config print modulepath)
   moduledir=${mod##*:}
