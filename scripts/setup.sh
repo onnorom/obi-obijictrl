@@ -40,7 +40,7 @@ for arg in "$@"; do
 done
 
 OPTIND=1
-while getopts ":p:a:e:x:dvho" opt; do
+while getopts ":p:a:e:x:ndvho" opt; do
   case $opt in
 	h) usageAndExit;;
 	e) prov_environment=$OPTARG;;
@@ -49,7 +49,7 @@ while getopts ":p:a:e:x:dvho" opt; do
 	x) proxy="$OPTARG"; echo "export xproxy=$proxy" >> ~/.automata_rc;;
 	n) noproxy="1"; echo "export nproxy=1" >> ~/.automata_rc;;
 	o) offline=true;;
-	v) VERBOSE='-v';;
+	v) VERBOSE='-v'; echo "export verbose='--verbose'" >> ~/.automata_rc;;
 	d) DEBUG='-d';;
 	*) usageAndExit;;
   esac
