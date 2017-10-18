@@ -96,5 +96,5 @@ if [[ $offline != true ]]; then
   check_repo_branch "${environment}"
 fi
 
-${dir}/bootstrap.sh -e "${environment}" -p "${productname}" ${app_env} ${VERBOSE} ${DEBUG}
+${dir}/bootstrap.sh -e "${environment}" -p "${productname}" ${app_env} ${VERBOSE} ${DEBUG} 2>&1 | sudo tee -a ${bnsautomata_log}
 
