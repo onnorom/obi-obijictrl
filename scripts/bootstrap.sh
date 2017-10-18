@@ -70,7 +70,7 @@ fi
 moduledirname=$(get_module_path)
 moduledir=${moduledirname:-'site'}
 pushd $dir/.. >/dev/null 2>&1
-$r10k_bin puppetfile install --moduledir=${moduledir} ${VERBOSE}
+$r10k_bin puppetfile install --moduledir=${moduledir} ${VERBOSE} 2>&1 |tee -a /tmp/.${PROGNAME}.log
 
-$puppet_bin apply --modulepath=modules:${moduledir}:'$basemodulepath' manifests/site.pp ${VERBOSE} ${DEBUG}
+$puppet_bin apply --modulepath=modules:${moduledir}:'$basemodulepath' manifests/site.pp ${VERBOSE} ${DEBUG} 2>&1 |tee -a /tmp/.${PROGNAME}.log
 

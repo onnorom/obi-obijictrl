@@ -10,7 +10,7 @@
   "dependencies": [
     {"name":"puppetlabs-stdlib","version_requirement":">= 4.13.1"},
     {"name":"obiji","version_requirement":">=0.1.1"},
-    {"name":"obijiautomata","version_requirement":">=0.1.6"}
+    {"name":"obijiautomata","version_requirement":">=0.1.7"}
   ],
   "data_provider": null
 }
