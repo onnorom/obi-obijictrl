@@ -1,0 +1,14 @@
+#!/usr/bin/perl
+  use strict;
+  use warnings;
+
+  my @checks = (
+    "/usr/sbin/service obijiautomata-production status",
+  );
+
+  for my $check ( @checks ) {
+    $check .= " 2>&1 > /dev/null"; # suppress output
+    system( $check ) == 0 or exit 1;
+    #system( $check ) != 0 or exit;
+  }
+
